@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f8f5ef">
+  <meta name="description" content="在手繪花朵陪伴下，記下今天的固定行程與代辦事項。">
+  <title>本日行程</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      --ink: #41433d; --muted: #89877e; --paper: #f8f5ef; --card: #fffefa;
+      --green: #71836e; --line: #ece7dc; --rose: #c58d85; --stem: #8a9b7c;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { min-width: 320px; min-height: 100vh; margin: 0; padding: max(23px, env(safe-area-inset-top)) 18px max(30px, env(safe-area-inset-bottom)); color: var(--ink); background-color: var(--paper); background-image: radial-gradient(#ded8ca .65px, transparent .65px); background-size: 17px 17px; }
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .page { width: min(100%, 1020px); margin: 0 auto; }
+    .header { position: relative; min-height: 187px; padding: 36px 30px 28px; overflow: hidden; background: rgb(255 254 250 / 92%); border: 1px solid #eae3d8; border-radius: 28px 28px 9px 28px; box-shadow: 0 8px 30px rgb(76 69 53 / 5%); }
+    .header::after { position: absolute; right: 20px; bottom: 12px; left: 20px; height: 1px; background: repeating-linear-gradient(90deg, #d7cbbd 0 4px, transparent 4px 8px); content: ""; }
+    .eyebrow { position: relative; z-index: 1; margin: 0 0 10px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .19em; }
+    h1 { position: relative; z-index: 1; margin: 0; font-size: clamp(31px, 7vw, 43px); font-weight: 750; letter-spacing: .045em; line-height: 1.3; }
+    .date { position: relative; z-index: 1; margin: 10px 0 0; color: var(--muted); font-size: 14px; letter-spacing: .04em; }
+    .hero-flower { position: absolute; top: 6px; right: 18px; width: 137px; height: 174px; color: var(--rose); opacity: .75; transform: rotate(5deg); }
+    .hero-flower .stem, .corner-flower .stem { fill: none; stroke: var(--stem); stroke-linecap: round; stroke-linejoin: round; }
+    .hero-flower .petal, .corner-flower .petal { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+    .intro { margin: 20px 2px 16px; color: #77776d; font-size: 14px; line-height: 1.7; }
+    .page-tabs { display: flex; gap: 8px; margin: 0 0 17px; padding: 5px; background: rgb(255 254 250 / 85%); border: 1px solid #eae5db; border-radius: 14px; }
+    .page-tab { display: inline-flex; min-height: 43px; flex: 1; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; color: #77776d; background: transparent; border: 1px solid transparent; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: 650; transition: background .15s ease, color .15s ease, border-color .15s ease; }
+    .page-tab:hover { background: #f5f4ee; }
+    .page-tab[aria-current="page"] { color: #50684e; background: #edf0e8; border-color: #e1e7dc; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 245px; align-items: start; gap: 20px; }
+    .main-content { display: grid; min-width: 0; gap: 21px; }
+    .content-section { min-width: 0; padding: 19px; background: rgb(255 254 250 / 83%); border: 1px solid #eae5db; border-radius: 9px 20px 20px 20px; box-shadow: 0 4px 15px rgb(76 69 53 / 4%); }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 13px; }
+    .section-heading h2 { margin: 0; font-size: 15px; font-weight: 720; letter-spacing: .06em; }
+    .section-heading span { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .schedule-list, .task-list { display: grid; gap: 11px; }
+    .schedule-card { display: grid; grid-template-columns: 35px minmax(0, 1fr); gap: 11px; padding: 13px 14px 14px; background: var(--card); border: 1px solid #eee8dd; border-radius: 6px 15px 15px 15px; }
+    .schedule-number, .task-number { display: grid; width: 30px; height: 30px; place-items: center; color: var(--green); background: #edf0e8; border: 1px solid #e2e7dc; border-radius: 50%; font-size: 11px; font-weight: 700; }
+    .entry-content, .task-main { min-width: 0; }
+    .entry-input, .task-input { display: block; width: 100%; min-height: 42px; padding: 7px 0; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; outline: none; font-size: 14px; }
+    .entry-input::placeholder, .task-input::placeholder { color: #aaa69c; }
+    .entry-input:focus, .task-input:focus { border-bottom-color: var(--green); }
+    .schedule-times { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 9px; margin-top: 11px; }
+    .schedule-times label { display: grid; gap: 5px; color: var(--muted); font-size: 11px; }
+    .schedule-times input { width: 100%; min-width: 0; min-height: 38px; padding: 6px 7px; color: #65655d; background: #faf9f4; border: 1px solid #eee9df; border-radius: 8px; font-size: 12px; }
+    .date-range { margin-top: 8px; }
+    .weekday-picker { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 11px; }
+    .weekday-option { position: relative; display: inline-flex; min-width: 36px; min-height: 36px; align-items: center; justify-content: center; color: #72736a; cursor: pointer; }
+    .weekday-option input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; }
+    .weekday-option span { display: grid; width: 34px; height: 34px; place-items: center; background: #f8f6f0; border: 1px solid #ebe6db; border-radius: 50%; font-size: 11px; transition: background .15s ease, color .15s ease, border-color .15s ease; }
+    .weekday-option input:checked + span { color: #fff; background: var(--green); border-color: var(--green); }
+    .weekday-option input:focus-visible + span { outline: 3px solid rgb(113 131 110 / 30%); outline-offset: 2px; }
+    .schedule-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 11px; }
+    .schedule-toggle { display: inline-flex; min-height: 37px; align-items: center; gap: 7px; color: #64725f; font-size: 12px; cursor: pointer; }
+    .schedule-toggle input { width: 17px; height: 17px; margin: 0; accent-color: var(--green); }
+    .remove-button { display: grid; width: 35px; min-height: 35px; margin-left: auto; place-items: center; color: #a57b75; background: #faf0ed; border: 1px solid transparent; border-radius: 50%; cursor: pointer; font-size: 18px; }
+    .task-card { display: grid; grid-template-columns: 33px minmax(0, 1fr); gap: 10px; align-items: start; padding: 13px 14px; background: var(--card); border: 1px solid #eee8dd; border-radius: 6px 15px 15px 15px; }
+    .task-actions { display: flex; flex-wrap: wrap; gap: 7px; padding-top: 10px; }
+    .action-button { display: inline-flex; min-height: 37px; align-items: center; justify-content: center; gap: 6px; padding: 7px 11px; color: #62685e; background: #f3f3ed; border: 1px solid transparent; border-radius: 999px; cursor: pointer; font-size: 12px; }
+    .action-button:hover { border-color: #dfe3d6; }
+    .action-button:focus-visible, .remove-button:focus-visible, .add-button:focus-visible { outline: 3px solid rgb(113 131 110 / 30%); outline-offset: 3px; }
+    .complete-button[aria-pressed="true"] { color: #fff; background: var(--green); }
+    .postpone-button { color: #827358; background: #f6f1e7; }
+    .task-card.is-complete { background: #f5f7f1; }
+    .task-card.is-complete .task-input { color: #8a9386; text-decoration: line-through; }
+    .task-card.is-postponed { border-color: #dfd4b9; }
+    .task-status { align-self: center; margin-left: auto; color: var(--muted); font-size: 11px; }
+    .empty-message { margin: 0; padding: 15px; color: var(--muted); background: rgb(255 254 250 / 75%); border: 1px dashed #e2dbce; border-radius: 8px; text-align: center; font-size: 12px; line-height: 1.7; }
+    .sidebar { position: sticky; top: 18px; display: grid; gap: 13px; padding: 17px; background: rgb(255 254 250 / 87%); border: 1px solid #eae3d8; border-radius: 8px 21px 21px 21px; box-shadow: 0 5px 17px rgb(76 69 53 / 4%); }
+    .sidebar-title { margin: 0 0 1px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+    .sidebar-copy { margin: -7px 0 1px; color: var(--muted); font-size: 11px; line-height: 1.7; }
+    .add-button { display: flex; width: 100%; min-height: 46px; align-items: center; justify-content: flex-start; gap: 9px; padding: 9px 11px; color: #63775f; background: #f6f6ef; border: 1px dashed #aab49f; border-radius: 9px 15px 15px 15px; cursor: pointer; text-align: left; font-size: 12px; font-weight: 650; line-height: 1.4; }
+    .add-button:hover { background: #f0f1e9; border-color: var(--green); }
+    .add-icon { display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border: 1px solid #aab49f; border-radius: 50%; font-size: 19px; font-weight: 400; line-height: 1; }
+    .summary { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; padding: 13px 15px; color: var(--muted); background: rgb(255 254 250 / 77%); border: 1px solid #eee8de; border-radius: 8px 15px 15px 15px; font-size: 13px; }
+    .summary strong { color: var(--green); font-weight: 700; }
+    .footer { position: relative; margin: 23px 0 0; padding: 0 42px; color: #89877e; text-align: center; font-size: 12px; line-height: 1.8; }
+    .corner-flower { position: absolute; top: -13px; left: 2px; width: 39px; height: 49px; color: #c4958a; opacity: .8; transform: rotate(-24deg); }
+    .corner-flower .stem { fill: none; stroke: var(--stem); stroke-linecap: round; stroke-linejoin: round; }
+    .corner-flower .petal { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+    [hidden] { display: none !important; }
+    @media (min-width: 600px) { body { padding-top: 39px; } .header { min-height: 199px; padding: 40px 37px 27px; } .hero-flower { right: 29px; width: 148px; height: 189px; } .content-section { padding: 21px; } }
+    @media (max-width: 700px) { body { padding-right: 13px; padding-left: 13px; } .workspace { grid-template-columns: minmax(0, 1fr); gap: 15px; } .sidebar { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: center; gap: 9px; padding: 12px; } .sidebar-title, .sidebar-copy { grid-column: 1 / -1; } .sidebar-copy { margin-top: -8px; } .add-button { min-height: 48px; padding: 7px; font-size: 11px; } .add-icon { width: 22px; height: 22px; flex-basis: 22px; } .main-content { gap: 15px; } .content-section { padding: 15px; } }
+    @media (max-width: 380px) { .header { min-height: 196px; padding: 34px 18px 25px; } .hero-flower { top: 24px; right: 1px; width: 108px; height: 143px; opacity: .62; } h1 { max-width: 235px; font-size: 30px; } .schedule-card { grid-template-columns: 29px minmax(0, 1fr); gap: 8px; padding-right: 10px; padding-left: 10px; } .schedule-times { gap: 6px; } .schedule-times input { padding-right: 4px; padding-left: 4px; font-size: 11px; } .page-tabs { gap: 3px; padding: 4px; } .page-tab { padding-right: 6px; padding-left: 6px; font-size: 12px; } }
+    .page-tabs { display: flex; gap: 8px; margin: 0 0 17px; padding: 5px; background: rgb(255 254 250 / 85%); border: 1px solid #eae5db; border-radius: 14px; }
+    .page-tab { display: inline-flex; min-height: 43px; flex: 1; align-items: center; justify-content: center; padding: 8px; color: #77776d; border: 1px solid transparent; border-radius: 10px; text-decoration: none; font-size: 13px; font-weight: 650; }
+    .page-tab[aria-current="page"] { color: #50684e; background: #edf0e8; border-color: #e1e7dc; }
+    .weekday-picker { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 11px; }
+    .weekday-option { position: relative; display: grid; width: 36px; height: 36px; place-items: center; cursor: pointer; }
+    .weekday-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .weekday-option span { display: grid; width: 34px; height: 34px; place-items: center; color: #72736a; background: #f8f6f0; border: 1px solid #ebe6db; border-radius: 50%; font-size: 11px; }
+    .weekday-option input:checked + span { color: white; background: var(--green); border-color: var(--green); }
+    .weekday-option input:focus-visible + span { outline: 3px solid rgb(113 131 110 / 30%); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 380px) { .page-tabs { gap: 3px; padding: 4px; } .page-tab { padding-right: 6px; padding-left: 6px; font-size: 12px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="header">
+      <svg class="hero-flower" viewBox="0 0 160 190" fill="none" aria-hidden="true">
+        <g class="stem" stroke-width="1.7"><path d="M83 177c-4-34 2-67 12-98"/><path d="M87 143c-23-9-37-24-43-44 19 3 34 13 45 30"/><path d="M91 123c17-19 34-25 51-24-10 17-25 27-47 31"/><path d="M75 177c5 2 11 2 16 0"/></g>
+        <g class="petal" stroke-width="1.7"><path d="M95 79c-17-4-27-17-23-29 4-11 17-11 24 2 5-16 18-22 26-13 8 10 3 26-9 38"/><path d="M112 77c6-17 19-23 29-15 10 7 6 20-7 26 16 4 23 17 14 26-9 9-26 6-38-5"/><path d="M109 99c17 7 22 21 13 30-8 9-20 4-25-10-5 16-18 22-27 12-8-9-5-26 6-39"/><path d="M88 94c-7 16-21 21-30 12-9-8-4-20 10-25-16-5-21-18-12-27 10-8 26-4 39 8"/><circle cx="98" cy="83" r="11"/><path d="M94 83c2-2 5-2 8 0M96 87c2 1 4 1 6 0M100 70c-1-7 0-11 3-14M120 82c6 0 9 2 12 5M103 101c1 5 0 9-3 12M82 88c-5 0-9-2-11-5"/></g>
+      </svg>
+      <p class="eyebrow">A LITTLE FLOWER FOR YOUR DAY</p>
+      <h1>本日行程</h1>
+      <p class="date" id="today-date" aria-live="polite"></p>
+    </header>
+    <p class="intro">為今天留一點時間，寫下固定行程與想完成的小事，照自己的步調慢慢前進。</p>
+
+    
+    <nav class="page-tabs" aria-label="行程分頁">
+      <a class="page-tab" id="today-tab" href="?view=today">✿ 今日安排</a>
+      <a class="page-tab" id="all-tab" href="?view=all">☼ 所有本日事項</a>
+    </nav>
+
+
+    <div class="workspace">
+      <div class="main-content">
+        <section class="content-section" id="schedule-section" aria-labelledby="schedule-heading">
+          <div class="section-heading"><h2 id="schedule-heading">固定行程</h2><span id="schedule-count" aria-live="polite">共 3 個行程</span></div>
+          <div class="schedule-list" id="schedule-list" aria-label="固定行程"></div>
+        </section>
+        <section class="content-section" id="task-section" aria-labelledby="tasks-heading">
+          <div class="section-heading"><h2 id="tasks-heading">代辦事項</h2><span id="task-count" aria-live="polite">共 3 件事</span></div>
+          <div class="task-list" id="task-list" aria-label="代辦事項"></div>
+        </section>
+        <section class="content-section" id="all-today-section" aria-labelledby="all-today-heading" hidden>
+          <div class="section-heading"><h2 id="all-today-heading">今天要做的所有事項</h2><span id="all-today-count" aria-live="polite"></span></div>
+          <div class="schedule-list" id="all-today-list" aria-label="本日所有應辦事項"></div>
+        </section>
+      </div>
+      <aside class="sidebar" aria-label="新增項目側欄">
+        <p class="sidebar-title">✿ 安排今天</p>
+        <p class="sidebar-copy">需要更多空間？隨時加入新的行程與代辦。</p>
+        <button class="add-button" id="add-schedule" type="button"><span class="add-icon" aria-hidden="true">+</span><span>新增固定行程</span></button>
+        <button class="add-button" id="add-task" type="button"><span class="add-icon" aria-hidden="true">+</span><span>新增代辦事項</span></button>
+      </aside>
+    </div>
+    <div class="summary" id="summary" aria-live="polite"><span>代辦完成進度</span><strong id="progress">已完成 0 / 3 項</strong></div>
+    <p class="footer">
+      <svg class="corner-flower" viewBox="0 0 50 60" fill="none" aria-hidden="true"><g class="stem" stroke-width="1.4"><path d="M24 56c1-15 6-27 14-38M25 48c-9-5-14-12-15-20 8 2 14 7 18 14"/></g><g class="petal" stroke-width="1.4"><path d="M37 20c-8-3-10-9-6-13 4-3 9 0 9 6 4-6 10-7 12-3 2 5-1 10-8 12M36 23c2-7 8-9 12-5 3 4 0 8-6 9 6 3 7 9 3 11-5 2-10-2-11-8M31 23c-3 7-9 9-12 5-3-4 0-8 6-9-6-3-7-9-3-11 5-2 10 2 11 8M35 25a3 3 0 1 0 0 .1"/></g></svg>
+      不用急著一次完成所有事，照自己的步調就好。
+    </p>
+  </main>
+  <script>
+    (() => {
+      const initialItemCount = 3;
+      const storageKey = 'daily-tasks-v1';
+      const scheduleStorageKey = 'daily-schedules-v1';
+      const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+      const todayDate = new Date();
+      const todayString = [todayDate.getFullYear(), String(todayDate.getMonth() + 1).padStart(2, '0'), String(todayDate.getDate()).padStart(2, '0')].join('-');
+      const todayDay = todayDate.getDay();
+      const dateElement = document.getElementById('today-date');
+      const scheduleListElement = document.getElementById('schedule-list');
+      const taskListElement = document.getElementById('task-list');
+      const scheduleCountElement = document.getElementById('schedule-count');
+      const taskCountElement = document.getElementById('task-count');
+      const progressElement = document.getElementById('progress');
+      const addScheduleButton = document.getElementById('add-schedule');
+      const addTaskButton = document.getElementById('add-task');
+      const todayTab = document.getElementById('today-tab');
+      const allTab = document.getElementById('all-tab');
+      const scheduleSection = document.getElementById('schedule-section');
+      const taskSection = document.getElementById('task-section');
+      const allTodaySection = document.getElementById('all-today-section');
+      const allTodayList = document.getElementById('all-today-list');
+      const allTodayCount = document.getElementById('all-today-count');
+      const summary = document.getElementById('summary');
+      dateElement.textContent = new Intl.DateTimeFormat('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(todayDate);
+
+      function getViewFromUrl() {
+        return new URLSearchParams(window.location.search).get('view') === 'all' ? 'all' : 'today';
+      }
+      let currentView = getViewFromUrl();
+      function loadList(key, factory, normalize) {
+        try {
+          const saved = JSON.parse(localStorage.getItem(key));
+          if (Array.isArray(saved) && saved.length > 0) return saved.filter((item) => item && typeof item === 'object').map(normalize);
+        } catch (error) {
+          // 無法存取瀏覽器儲存空間時，仍可繼續使用頁面。
+        }
+        return Array.from({ length: initialItemCount }, factory);
+      }
+      const schedules = loadList(scheduleStorageKey,
+        () => ({ text: '', startDate: '', endDate: '', time: '', weekdays: [todayDay], appliesToday: true }),
+        (schedule) => ({
+          text: typeof schedule.text === 'string' ? schedule.text : '',
+          startDate: typeof schedule.startDate === 'string' ? schedule.startDate : '',
+          endDate: typeof schedule.endDate === 'string' ? schedule.endDate : '',
+          time: typeof schedule.time === 'string' ? schedule.time : '',
+          weekdays: Array.isArray(schedule.weekdays) ? schedule.weekdays.filter((day) => Number.isInteger(day) && day >= 0 && day <= 6) : [todayDay],
+          appliesToday: schedule.appliesToday !== false
+        })
+      );
+      const tasks = loadList(storageKey,
+        () => ({ text: '', completed: false, postponed: false }),
+        (task) => ({ text: typeof task.text === 'string' ? task.text : '', completed: Boolean(task.completed), postponed: Boolean(task.postponed) })
+      );
+      function saveList(key, items) {
+        try { localStorage.setItem(key, JSON.stringify(items)); }
+        catch (error) { /* 私密瀏覽或儲存空間受限時，不影響目前頁面操作。 */ }
+      }
+      function updateCounts() {
+        const complete = tasks.filter((task) => task.completed).length;
+        scheduleCountElement.textContent = `共 ${schedules.length} 個行程`;
+        taskCountElement.textContent = `共 ${tasks.length} 件事`;
+        progressElement.textContent = `已完成 ${complete} / ${tasks.length} 項`;
+      }
+      function makeInput(className, value, placeholder, label, onInput) {
+        const input = document.createElement('input');
+        input.className = className; input.type = 'text'; input.maxLength = 120; input.value = value;
+        input.placeholder = placeholder; input.setAttribute('aria-label', label);
+        input.addEventListener('input', () => onInput(input.value));
+        return input;
+      }
+      function renderSchedules() {
+        scheduleListElement.replaceChildren();
+        if (schedules.length === 0) {
+          const empty = document.createElement('p'); empty.className = 'empty-message';
+          empty.textContent = '目前沒有固定行程，使用側欄按鈕新增一筆吧。'; scheduleListElement.append(empty); return;
+        }
+        schedules.forEach((schedule, index) => {
+          if (!Array.isArray(schedule.weekdays)) schedule.weekdays = [todayDay];
+          const card = document.createElement('article'); card.className = 'schedule-card';
+          const number = document.createElement('span'); number.className = 'schedule-number'; number.setAttribute('aria-hidden', 'true'); number.textContent = String(index + 1).padStart(2, '0');
+          const content = document.createElement('div'); content.className = 'entry-content';
+          const input = makeInput('entry-input', schedule.text, '輸入固定行程名稱', `第 ${index + 1} 個固定行程名稱`, (value) => { schedules[index].text = value; saveList(scheduleStorageKey, schedules); });
+          const dateRange = document.createElement('div'); dateRange.className = 'schedule-times date-range';
+          const startInput = document.createElement('input'); startInput.type = 'date'; startInput.value = schedule.startDate; startInput.setAttribute('aria-label', `第 ${index + 1} 個行程開始日期`);
+          const endInput = document.createElement('input'); endInput.type = 'date'; endInput.value = schedule.endDate; endInput.setAttribute('aria-label', `第 ${index + 1} 個行程結束日期`);
+          if (schedule.startDate) endInput.min = schedule.startDate;
+          if (schedule.endDate) startInput.max = schedule.endDate;
+          [{ label: '開始日期', control: startInput }, { label: '結束日期', control: endInput }].forEach(({ label, control }) => {
+            const wrapper = document.createElement('label'); wrapper.append(document.createTextNode(label), control); dateRange.append(wrapper);
+          });
+          startInput.addEventListener('change', () => { schedules[index].startDate = startInput.value; endInput.min = startInput.value; if (endInput.value && startInput.value > endInput.value) { endInput.value = startInput.value; schedules[index].endDate = endInput.value; } saveList(scheduleStorageKey, schedules); if (currentView === 'all') renderAllToday(); });
+          endInput.addEventListener('change', () => { schedules[index].endDate = endInput.value; startInput.max = endInput.value; if (startInput.value && endInput.value < startInput.value) { startInput.value = endInput.value; schedules[index].startDate = startInput.value; } saveList(scheduleStorageKey, schedules); if (currentView === 'all') renderAllToday(); });
+          const timeFields = document.createElement('div'); timeFields.className = 'schedule-times';
+          const timeLabel = document.createElement('label'); timeLabel.append(document.createTextNode('行程時間'));
+          const timeInput = document.createElement('input'); timeInput.type = 'time'; timeInput.value = schedule.time; timeInput.setAttribute('aria-label', `第 ${index + 1} 個行程時間`);
+          timeInput.addEventListener('input', () => { schedules[index].time = timeInput.value; saveList(scheduleStorageKey, schedules); if (currentView === 'all') renderAllToday(); });
+          timeLabel.append(timeInput); timeFields.append(timeLabel);
+          const weekdayPicker = document.createElement('div'); weekdayPicker.className = 'weekday-picker'; weekdayPicker.setAttribute('role', 'group'); weekdayPicker.setAttribute('aria-label', `選擇第 ${index + 1} 個行程適用星期`);
+          weekdays.forEach((day, dayIndex) => {
+            const dayLabel = document.createElement('label'); dayLabel.className = 'weekday-option';
+            const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.value = String(dayIndex); checkbox.checked = schedule.weekdays.includes(dayIndex); checkbox.setAttribute('aria-label', `星期${day}`);
+            checkbox.addEventListener('change', () => {
+              if (checkbox.checked && !schedule.weekdays.includes(dayIndex)) schedule.weekdays.push(dayIndex);
+              if (!checkbox.checked) schedule.weekdays = schedule.weekdays.filter((value) => value !== dayIndex);
+              schedule.weekdays.sort((a, b) => a - b); saveList(scheduleStorageKey, schedules); if (currentView === 'all') renderAllToday();
+            });
+            const dayText = document.createElement('span'); dayText.textContent = day; dayLabel.append(checkbox, dayText); weekdayPicker.append(dayLabel);
+          });
+          const toolbar = document.createElement('div'); toolbar.className = 'schedule-toolbar';
+          const appliesToday = document.createElement('label'); appliesToday.className = 'schedule-toggle';
+          const todayToggle = document.createElement('input'); todayToggle.type = 'checkbox'; todayToggle.checked = schedule.appliesToday !== false; todayToggle.setAttribute('aria-label', `第 ${index + 1} 個固定行程今天是否適用`);
+          todayToggle.addEventListener('change', () => { schedules[index].appliesToday = todayToggle.checked; saveList(scheduleStorageKey, schedules); if (currentView === 'all') renderAllToday(); });
+          appliesToday.append(todayToggle, document.createTextNode('列入今天行程'));
+          const removeButton = document.createElement('button'); removeButton.className = 'remove-button'; removeButton.type = 'button'; removeButton.textContent = '×'; removeButton.setAttribute('aria-label', `刪除第 ${index + 1} 個固定行程`);
+          removeButton.addEventListener('click', () => { schedules.splice(index, 1); saveList(scheduleStorageKey, schedules); renderAll(); });
+          toolbar.append(appliesToday, removeButton);
+          content.append(input, dateRange, timeFields, weekdayPicker, toolbar); card.append(number, content); scheduleListElement.append(card);
+        });
+      }
+      function scheduleAppliesToday(schedule) {
+        if (!schedule.text.trim() || schedule.appliesToday === false) return false;
+        if (!Array.isArray(schedule.weekdays) || !schedule.weekdays.includes(todayDay)) return false;
+        if (schedule.startDate && todayString < schedule.startDate) return false;
+        if (schedule.endDate && todayString > schedule.endDate) return false;
+        return true;
+      }
+      function renderAllToday() {
+        allTodayList.replaceChildren();
+        const todaysSchedules = schedules.filter(scheduleAppliesToday).map((schedule) => ({ kind: 'schedule', text: schedule.text.trim(), time: schedule.time }));
+        const todaysTasks = tasks.filter((task) => task.text.trim()).map((task) => ({ kind: 'task', text: task.text.trim(), completed: task.completed, postponed: task.postponed }));
+        const items = [...todaysSchedules, ...todaysTasks].sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+        allTodayCount.textContent = `共 ${items.length} 項`;
+        if (items.length === 0) {
+          const empty = document.createElement('p'); empty.className = 'empty-message'; empty.textContent = '今天還沒有安排事項。先在固定行程或代辦事項新增內容吧。'; allTodayList.append(empty); return;
+        }
+        items.forEach((item, index) => {
+          const card = document.createElement('article'); card.className = item.kind === 'schedule' ? 'schedule-card' : 'task-card';
+          if (item.completed) card.classList.add('is-complete'); if (item.postponed) card.classList.add('is-postponed');
+          const number = document.createElement('span'); number.className = item.kind === 'schedule' ? 'schedule-number' : 'task-number'; number.setAttribute('aria-hidden', 'true'); number.textContent = String(index + 1).padStart(2, '0');
+          const content = document.createElement('div'); content.className = item.kind === 'schedule' ? 'entry-content' : 'task-main';
+          const title = document.createElement('div'); title.textContent = item.text; title.style.cssText = 'padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;overflow-wrap:anywhere;'; content.append(title);
+          if (item.kind === 'schedule') { const details = document.createElement('span'); details.style.cssText = 'display:block;margin-top:9px;color:var(--muted);font-size:12px;'; details.textContent = item.time ? `行程時間 ${item.time}` : '固定行程'; content.append(details); }
+          else { const status = document.createElement('span'); status.style.cssText = 'display:block;margin-top:9px;color:var(--muted);font-size:12px;'; status.textContent = item.completed ? '✓ 已完成' : item.postponed ? '↻ 已延期' : '代辦事項'; content.append(status); }
+          card.append(number, content); allTodayList.append(card);
+        });
+      }
+      function renderTasks() {
+        taskListElement.replaceChildren();
+        if (tasks.length === 0) { const empty = document.createElement('p'); empty.className = 'empty-message'; empty.textContent = '代辦事項暫時清空了，使用側欄新增一件事。'; taskListElement.append(empty); return; }
+        tasks.forEach((task, index) => {
+          const card = document.createElement('article'); card.className = 'task-card'; if (task.completed) card.classList.add('is-complete'); if (task.postponed) card.classList.add('is-postponed');
+          const number = document.createElement('span'); number.className = 'task-number'; number.setAttribute('aria-hidden', 'true'); number.textContent = String(index + 1).padStart(2, '0');
+          const main = document.createElement('div'); main.className = 'task-main';
+          const input = makeInput('task-input', task.text, '寫下想完成的事…', `第 ${index + 1} 項代辦事項`, (value) => { tasks[index].text = value; saveList(storageKey, tasks); if (currentView === 'all') renderAllToday(); });
+          const actions = document.createElement('div'); actions.className = 'task-actions';
+          const completeButton = document.createElement('button'); completeButton.className = 'action-button complete-button'; completeButton.type = 'button'; completeButton.setAttribute('aria-pressed', String(task.completed)); completeButton.textContent = task.completed ? '✓ 已完成' : '✓ 標記完成';
+          completeButton.addEventListener('click', () => { tasks[index].completed = !tasks[index].completed; if (tasks[index].completed) tasks[index].postponed = false; saveList(storageKey, tasks); renderAll(); });
+          const postponeButton = document.createElement('button'); postponeButton.className = 'action-button postpone-button'; postponeButton.type = 'button'; postponeButton.setAttribute('aria-pressed', String(task.postponed)); postponeButton.textContent = task.postponed ? '↻ 已延期' : '↻ 延期';
+          postponeButton.addEventListener('click', () => { tasks[index].postponed = !tasks[index].postponed; if (tasks[index].postponed) tasks[index].completed = false; saveList(storageKey, tasks); renderAll(); });
+          const removeButton = document.createElement('button'); removeButton.className = 'remove-button'; removeButton.type = 'button'; removeButton.textContent = '×'; removeButton.setAttribute('aria-label', `刪除第 ${index + 1} 項代辦事項`);
+          removeButton.addEventListener('click', () => { tasks.splice(index, 1); saveList(storageKey, tasks); renderAll(); });
+          actions.append(completeButton, postponeButton, removeButton);
+          if (task.postponed) { const status = document.createElement('span'); status.className = 'task-status'; status.textContent = '已安排稍後處理'; actions.append(status); }
+          main.append(input, actions); card.append(number, main); taskListElement.append(card);
+        });
+      }
+      function setView(view, updateHistory = true) {
+        currentView = view === 'all' ? 'all' : 'today';
+        if (updateHistory) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('view', currentView);
+          window.history.pushState({ view: currentView }, '', url);
+        }
+        const isAll = currentView === 'all';
+        todayTab.setAttribute('aria-current', isAll ? 'false' : 'page');
+        allTab.setAttribute('aria-current', isAll ? 'page' : 'false');
+        scheduleSection.hidden = isAll;
+        taskSection.hidden = isAll;
+        allTodaySection.hidden = !isAll;
+        summary.hidden = isAll;
+        renderAll();
+      }
+      function renderAll() { renderSchedules(); renderTasks(); updateCounts(); renderAllToday(); }
+      todayTab.addEventListener('click', (event) => { event.preventDefault(); setView('today'); });
+      allTab.addEventListener('click', (event) => { event.preventDefault(); setView('all'); });
+      window.addEventListener('popstate', () => setView(getViewFromUrl(), false));
+      addScheduleButton.addEventListener('click', () => { schedules.push({ text: '', startDate: '', endDate: '', time: '', weekdays: [todayDay], appliesToday: true }); saveList(scheduleStorageKey, schedules); renderAll(); setView('today'); scheduleListElement.lastElementChild?.querySelector('.entry-input')?.focus(); });
+      addTaskButton.addEventListener('click', () => { tasks.push({ text: '', completed: false, postponed: false }); saveList(storageKey, tasks); renderAll(); setView('today'); taskListElement.lastElementChild?.querySelector('.task-input')?.focus(); });
+      setView(currentView, false);
+    })();
+  </script>
+</body>
+</html>
